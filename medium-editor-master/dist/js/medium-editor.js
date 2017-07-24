@@ -2343,6 +2343,7 @@ MediumEditor.extensions = {};
         },
 
         getSelectedElements: function (doc) {
+            
             var selection = doc.getSelection(),
                 range,
                 toRet,
@@ -2377,7 +2378,7 @@ MediumEditor.extensions = {};
         },
 
         select: function (doc, startNode, startOffset, endNode, endOffset) {
-            var range = doc.createRange();
+            var range = doc.addRange();
             range.setStart(startNode, startOffset);
             if (endNode) {
                 range.setEnd(endNode, endOffset);
@@ -2414,7 +2415,9 @@ MediumEditor.extensions = {};
         },
 
         getSelectionRange: function (ownerDocument) {
+            
             var selection = ownerDocument.getSelection();
+
             if (selection.rangeCount === 0) {
                 return null;
             }
@@ -2731,6 +2734,7 @@ MediumEditor.extensions = {};
                     this.attachDOMEvent(this.options.ownerDocument.body, 'mousedown', this.handleBodyMousedown.bind(this), true);
                     this.attachDOMEvent(this.options.ownerDocument.body, 'click', this.handleBodyClick.bind(this), true);
                     this.attachDOMEvent(this.options.ownerDocument.body, 'focus', this.handleBodyFocus.bind(this), true);
+                    this.attachDOMEvent(this.options.ownerDocument.body, 'dblclick', this.handleBodyDblClick.bind(this), true);//dbp
                     break;
                 case 'blur':
                     // Detecting when focus is lost
@@ -2850,8 +2854,23 @@ MediumEditor.extensions = {};
         },
 
         updateFocus: function (target, eventObj) {
+            
+
+
+
+
             var hadFocus = this.base.getFocusedElement(),
                 toFocus;
+
+            // if(target.className === 'selectBox'){
+            //   target = document.querySelector('.medium-editor-toolbar-select');
+            //   toFocus = hadFocus;
+
+            // }
+
+
+             // console.log('FOCUS target ,event',target,event)
+
 
             // For clicks, we need to know if the mousedown that caused the click happened inside the existing focused element
             // or one of the extension elements.  If so, we don't want to focus another element
@@ -2861,14 +2880,22 @@ MediumEditor.extensions = {};
                 (MediumEditor.util.isDescendant(hadFocus, this.lastMousedownTarget, true) ||
                     isElementDescendantOfExtension(this.base.extensions, this.lastMousedownTarget))) {
                 toFocus = hadFocus;
+            
+            // console.warn('f1',toFocus,hadFocus,this.lastMousedownTarget)
+
             }
 
             if (!toFocus) {
+              //console.warn('f2')
+
                 this.base.elements.some(function (element) {
                     // If the target is part of an editor element, this is the element getting focus
                     if (!toFocus && (MediumEditor.util.isDescendant(element, target, true))) {
                         toFocus = element;
+                        //console.warn('f21')
                     }
+                    //console.warn('f22')
+
 
                     // bail if we found an element that's getting focus
                     return !!toFocus;
@@ -2876,13 +2903,20 @@ MediumEditor.extensions = {};
             }
 
             // Check if the target is external (not part of the editor, toolbar, or any other extension)
-            var externalEvent = !MediumEditor.util.isDescendant(hadFocus, target, true) &&
-                !isElementDescendantOfExtension(this.base.extensions, target);
+            var externalEvent =  ( !MediumEditor.util.isDescendant(hadFocus, target, true) &&
+                !isElementDescendantOfExtension(this.base.extensions, target)  );
+            
+           
+
+// && ( eventObj.srcElement.className !== 'dropdown-citizen' && eventObj.srcElement.parentElement.className  !== 'dropdown-citizen' ) 
+
 
             if (toFocus !== hadFocus) {
+              //console.warn('f3')
                 // If element has focus, and focus is going outside of editor
                 // Don't blur focused element if clicking on editor, toolbar, or anchorpreview
                 if (hadFocus && externalEvent) {
+                   //console.warn('f31')
                     // Trigger blur on the editable that has lost focus
                     hadFocus.removeAttribute('data-medium-focused');
                     this.triggerCustomEvent('blur', eventObj, hadFocus);
@@ -2890,6 +2924,8 @@ MediumEditor.extensions = {};
 
                 // If focus is going into an editor element
                 if (toFocus) {
+                  //console.warn('f32')
+
                     // Trigger focus on the editable that now has focus
                     toFocus.setAttribute('data-medium-focused', true);
                     this.triggerCustomEvent('focus', eventObj, toFocus);
@@ -2897,8 +2933,11 @@ MediumEditor.extensions = {};
             }
 
             if (externalEvent) {
+               //console.warn('f4')
                 this.triggerCustomEvent('externalInteraction', eventObj);
             }
+
+            // console.log('FOCUS STUFF',externalEvent,hadFocus,toFocus)// go heree
         },
 
         updateInput: function (target, eventObj) {
@@ -2918,6 +2957,20 @@ MediumEditor.extensions = {};
         },
 
         handleDocumentSelectionChange: function (event) {
+
+
+          //fuuu
+          console.warn('entering input with selection change?');
+          console.log(event);
+
+          // this.base.handleInputCounter++; // prevents the first input event to fire double times //dbp
+          // if(this.base.handleInputCounter !== 1){
+          // var containerSizeChange = new CustomEvent('oncontainersizechange',{bubbles:true,detail:event.currentTarget.id});//dbp
+          // event.target.dispatchEvent(containerSizeChange);
+          // }
+          
+
+          this.updateInput(event.currentTarget, event);
             // When selectionchange fires, target and current target are set
             // to document, since this is where the event is handled
             // However, currentTarget will have an 'activeElement' property
@@ -2953,19 +3006,190 @@ MediumEditor.extensions = {};
         },
 
         handleBodyClick: function (event) {
-            this.updateFocus(event.target, event);
-        },
+   
+          if(event.srcElement.localName === 'circle'){
+             
+          }
+          else{
 
+          var textBoxClicked = new CustomEvent('ontextboxclicked',{bubbles:true,detail:this.base.getRawIdString()});
+          event.target.dispatchEvent(textBoxClicked);
+
+          }
+          this.updateFocus(event.target, event);
+          console.log('got click',this,event);
+
+
+        },
+       
+          findTheRightTarget : function(event){//dbp
+          // console.log(event);
+          var targetId;
+          var realTargetAsElement;
+          var targetAsElement;
+          // console.log('test',/medium-editor-element/.test(event.srcElement.className) );
+
+          if(!/medium-editor-element/.test(event.srcElement.className) && event.srcElement.offsetParent){
+          
+          if(event.srcElement.offsetParent.localName === 'foreignObject'){
+            // console.log('right block')
+            this.findTheRightTargetloopControl=true;
+            this.findTheRightTargete = event.srcElement;
+
+            while (this.findTheRightTargetloopControl){
+               // console.log('looping')
+              if(/medium-editor-element/.test(this.findTheRightTargete.parentElement.className)){
+                this.findTheRightTargetloopControl=false;
+                // console.warn('loopControl',this.findTheRightTargetloopControl);
+                targetId = this.findTheRightTargete.parentElement.id;
+                targetAsElement = this.findTheRightTargete.parentElement;
+              }
+              else{
+             
+              this.findTheRightTargete = this.findTheRightTargete.parentElement;
+               // console.log(this.findTheRightTargete);
+              }
+         
+
+            }
+  
+            realTargetAsElement = event.srcElement;
+          }
+          
+          }
+
+          else{
+            targetId = event.target.id;
+            targetAsElement = document.getElementById(targetId);
+            realTargetAsElement = event.srcElement;
+          }
+                // console.log('found',targetId,realTargetAsElement);
+                return {eventTargetId:targetId,realTargetAsElement:realTargetAsElement,targetAsElement:targetAsElement};
+          },
+          
+          handleBodyDblClick:function(event){
+          var query = this.findTheRightTarget(event);
+
+
+          if(window.transformStore.text.hasOwnProperty(query.eventTargetId)) {
+          console.log('got DOUBLE CLICK',query.targetAsElement);
+          this.focusElement(query.targetAsElement);
+          var editingText = new CustomEvent('oneditingtext',{bubbles:true,detail:query.eventTargetId});
+
+          event.target.dispatchEvent(editingText);
+
+          }
+
+        },
         handleBodyFocus: function (event) {
-            this.updateFocus(event.target, event);
+          // event.preventDefault();
+          // event.stopPropagation();
+          // d3.select('.medium-editor-element').classed('area-style',true);
+
+          this.updateFocus(event.target, event);
+          console.log('got click');
+
+      
+        
+
         },
 
         handleBodyMousedown: function (event) {
-            this.lastMousedownTarget = event.target;
+            
+            console.log("LOOK",event);
+            var query = this.findTheRightTarget(event);
+
+            if(window.transformStore.text.hasOwnProperty(query.eventTargetId)) {
+
+              if(!window.transformStore.text[query.eventTargetId]['canEditText']) {
+                // console.warn('bl1');
+                event.preventDefault();
+                this.lastMousedownTarget = event.target;
+                window.transformStore.text[query.eventTargetId].chosen = true;  
+              
+              }
+              else{
+                  this.lastMousedownTarget = event.target;
+              }
+            
+            }
+            else{
+
+              var isEditorItem;
+              if(event.target.id === 'medium-editor-place'){
+
+              isEditorItem= true;
+              }
+              else{
+
+              
+              var p = event.target.parentElement;
+              
+              
+
+              while(p.id !== 'medium-editor-place') {
+                p=p.parentElement;
+                if(!p){
+                  break;
+                }
+              }  
+               
+               if(p){
+   
+                isEditorItem= true;
+               }
+               else{
+
+                isEditorItem= false;
+               }
+              
+
+              }
+              
+
+              // console.warn(p,p.id,isEditorItem)
+              if(event.srcElement.parentElement.className === 'tzSelect' || event.srcElement.className === 'dropdown-citizen'){
+
+                event.preventDefault();
+                this.lastMousedownTarget = event.target;
+              }
+              else if(!isEditorItem){
+
+              
+         
+
+              console.warn('blur time');
+              if(this.base.getFocusedElement()){
+              this.base.getFocusedElement().blur();
+              this.base.getFocusedElement().removeAttribute('data-medium-focused')
+       
+              this.base.selected=false;
+              var stopEditingText = new CustomEvent('onstopeditingtext',{bubbles:true,detail:event.target.id});
+              event.target.dispatchEvent(stopEditingText);
+              console.log('stopFired')
+              }
+              
+              }
+
+                
+              
+            }
+            
         },
 
         handleInput: function (event) {
-            this.updateInput(event.currentTarget, event);
+
+          console.warn('entering input?');
+          console.log(event);
+
+          this.base.handleInputCounter++; // prevents the first input event to fire double times //dbp
+          if(this.base.handleInputCounter !== 1){
+          var containerSizeChange = new CustomEvent('oncontainersizechange',{bubbles:true,detail:event.currentTarget.id});//dbp
+          event.target.dispatchEvent(containerSizeChange);
+          }
+          
+
+          this.updateInput(event.currentTarget, event);
         },
 
         handleClick: function (event) {
@@ -3013,7 +3237,7 @@ MediumEditor.extensions = {};
         },
 
         handleKeydown: function (event) {
-
+            
             this.triggerCustomEvent('editableKeydown', event, event.currentTarget);
 
             if (MediumEditor.util.isKey(event, MediumEditor.util.keyCode.SPACE)) {
@@ -3141,6 +3365,7 @@ MediumEditor.extensions = {};
 
             this.button = this.createButton();
             this.on(this.button, 'click', this.handleClick.bind(this));
+
         },
 
         /* getButton: [function ()]
@@ -3280,6 +3505,14 @@ MediumEditor.extensions = {};
      * Set of default config options for all of the built-in MediumEditor buttons
      */
     MediumEditor.extensions.button.prototype.defaults = {
+        // execActionInternal(action, opts)
+         'allignText': {
+            name: 'allignText',
+            action: 'allignText',
+            aria: 'allignText',
+            useQueryState: false,
+            contentDefault: '<b>Allign</b>'
+        },
         'bold': {
             name: 'bold',
             action: 'bold',
@@ -3542,6 +3775,7 @@ MediumEditor.extensions = {};
 
         init: function () {
             MediumEditor.extensions.button.prototype.init.apply(this, arguments);
+
         },
 
         // default labels for the form buttons
@@ -3712,8 +3946,7 @@ MediumEditor.extensions = {};
             event.stopPropagation();
 
             var range = MediumEditor.selection.getSelectionRange(this.document);
-
-            if (range.startContainer.nodeName.toLowerCase() === 'a' ||
+                     if (range.startContainer.nodeName.toLowerCase() === 'a' ||
                 range.endContainer.nodeName.toLowerCase() === 'a' ||
                 MediumEditor.util.getClosestTag(MediumEditor.selection.getSelectedParentElement(range), 'a')) {
                 return this.execAction('unlink');
@@ -4777,10 +5010,10 @@ MediumEditor.extensions = {};
         name: 'fontname',
         action: 'fontName',
         aria: 'change font name',
-        contentDefault: '&#xB1;', // ±
+        contentDefault: 'Font', // ±
         contentFA: '<i class="fa fa-font"></i>',
 
-        fonts: ['', 'Arial', 'Verdana', 'Times New Roman'],
+        fonts: ['Arial', 'Verdana', 'Times New Roman','Tangerine','Inconsolata','Droid','Sans'],
 
         init: function () {
             MediumEditor.extensions.form.prototype.init.apply(this, arguments);
@@ -4795,7 +5028,13 @@ MediumEditor.extensions = {};
             if (!this.isDisplayed()) {
                 // Get FontName of current selection (convert to string since IE returns this as number)
                 var fontName = this.document.queryCommandValue('fontName') + '';
-                this.showForm(fontName);
+                
+                if (fontName === 'Times' || !fontName){
+                  this.showForm(false);
+                }else{
+                  this.showForm(fontName);
+                }
+                
             }
 
             return false;
@@ -4805,7 +5044,9 @@ MediumEditor.extensions = {};
         getForm: function () {
             if (!this.form) {
                 this.form = this.createForm();
-            }
+
+              }
+            
             return this.form;
         },
 
@@ -4821,13 +5062,19 @@ MediumEditor.extensions = {};
 
         showForm: function (fontName) {
             var select = this.getSelect();
-
+           
             this.base.saveSelection();
-            this.hideToolbarDefaultActions();
+            // this.hideToolbarDefaultActions();//dbp
             this.getForm().style.display = 'block';
             this.setToolbarPosition();
-
-            select.value = fontName || '';
+            if(fontName){
+              select.value = fontName
+            }
+            else{
+              select.value = 'Select Font';
+            }
+            
+            console.log(select.value)
             select.focus();
         },
 
@@ -4847,11 +5094,13 @@ MediumEditor.extensions = {};
         // core methods
 
         doFormSave: function () {
+          console.warn('fontName form save')
             this.base.restoreSelection();
             this.base.checkSelection();
         },
 
         doFormCancel: function () {
+          console.warn('fontName form cancel')
             this.base.restoreSelection();
             this.clearFontName();
             this.base.checkSelection();
@@ -4862,61 +5111,80 @@ MediumEditor.extensions = {};
             var doc = this.document,
                 form = doc.createElement('div'),
                 select = doc.createElement('select'),
-                close = doc.createElement('a'),
-                save = doc.createElement('a'),
+                // close = doc.createElement('a'),
+                // save = doc.createElement('a'),
                 option;
 
             // Font Name Form (div)
-            form.className = 'medium-editor-toolbar-form';
+            form.className = 'medium-editor-toolbar-form font-name-form';
             form.id = 'medium-editor-toolbar-form-fontname-' + this.getEditorId();
-
+            
+            form.style.height='0px';
             // Handle clicks on the form itself
             this.on(form, 'click', this.handleFormClick.bind(this));
 
             // Add font names
+            var option = doc.createElement('option');
+            
+            option.disabled=true;
+            option.setAttribute('selected','selected');
+            option.setAttribute('data-skip',"1");
+            option.innerHTML = 'Select Font';
+            select.appendChild(option);
+            
             for (var i = 0; i<this.fonts.length; i++) {
+                // var og = doc.createElement('optgroup');
                 option = doc.createElement('option');
+                option.setAttribute('data-html-text',this.fonts[i])
+                // og.style=`font-family:${this.fonts[i]};`
                 option.innerHTML = this.fonts[i];
                 option.value = this.fonts[i];
+                
                 select.appendChild(option);
+                // og.appendChild(option);
             }
-
+            // console.log('this',this);
+            // debugger;
             select.className = 'medium-editor-toolbar-select';
+            //differentiate select boxes.
+            select.id = this.base.options.toolbar.identifier+"-toolbar-select";
             form.appendChild(select);
 
             // Handle typing in the textbox
             this.on(select, 'change', this.handleFontChange.bind(this));
 
-            // Add save buton
-            save.setAttribute('href', '#');
-            save.className = 'medium-editor-toobar-save';
-            save.innerHTML = this.getEditorOption('buttonLabels') === 'fontawesome' ?
-                             '<i class="fa fa-check"></i>' :
-                             '&#10003;';
-            form.appendChild(save);
+            // // Add save buton
+            // save.setAttribute('href', '#');
+            // save.className = 'medium-editor-toobar-save';
+            // save.innerHTML = '';
+            // form.appendChild(save);
 
-            // Handle save button clicks (capture)
-            this.on(save, 'click', this.handleSaveClick.bind(this), true);
+            // // Handle save button clicks (capture)
+            // this.on(save, 'click', this.handleSaveClick.bind(this), true);
 
-            // Add close button
-            close.setAttribute('href', '#');
-            close.className = 'medium-editor-toobar-close';
-            close.innerHTML = this.getEditorOption('buttonLabels') === 'fontawesome' ?
-                              '<i class="fa fa-times"></i>' :
-                              '&times;';
-            form.appendChild(close);
+            // // Add close button
+            // close.setAttribute('href', '#');
+            // close.className = 'medium-editor-toobar-close';
+            // close.innerHTML = '';
+            // form.appendChild(close);
 
-            // Handle close button clicks
-            this.on(close, 'click', this.handleCloseClick.bind(this));
+            // // Handle close button clicks
+            // this.on(close, 'click', this.handleCloseClick.bind(this));
+           
+
+
+
 
             return form;
         },
 
         getSelect: function () {
+          console.warn('fontName get Select')
             return this.getForm().querySelector('select.medium-editor-toolbar-select');
         },
 
         clearFontName: function () {
+          console.warn('fontName clear select')
             MediumEditor.selection.getSelectedElements(this.document).forEach(function (el) {
                 if (el.nodeName.toLowerCase() === 'font' && el.hasAttribute('face')) {
                     el.removeAttribute('face');
@@ -4925,7 +5193,9 @@ MediumEditor.extensions = {};
         },
 
         handleFontChange: function () {
+          console.warn('fontName font change')
             var font = this.getSelect().value;
+            console.log("THE FONT " ,font)
             if (font === '') {
                 this.clearFontName();
             } else {
@@ -4934,17 +5204,21 @@ MediumEditor.extensions = {};
         },
 
         handleFormClick: function (event) {
+            console.warn('fontName font click')
             // make sure not to hide form when clicking inside the form
             event.stopPropagation();
         },
 
         handleSaveClick: function (event) {
             // Clicking Save -> create the font size
+           console.warn('fontName save click')
             event.preventDefault();
             this.doFormSave();
         },
 
         handleCloseClick: function (event) {
+          console.warn('fontName close click')
+
             // Click Close -> close the form
             event.preventDefault();
             this.doFormCancel();
@@ -4954,183 +5228,200 @@ MediumEditor.extensions = {};
     MediumEditor.extensions.fontName = FontNameForm;
 }());
 
-(function () {
-    'use strict';
 
-    var FontSizeForm = MediumEditor.extensions.form.extend({
+//size plugin
+// (function () {
+//     'use strict';
 
-        name: 'fontsize',
-        action: 'fontSize',
-        aria: 'increase/decrease font size',
-        contentDefault: '&#xB1;', // ±
-        contentFA: '<i class="fa fa-text-height"></i>',
+//     var FontSizeForm = MediumEditor.extensions.form.extend({
 
-        init: function () {
-            MediumEditor.extensions.form.prototype.init.apply(this, arguments);
-        },
+//         name: 'fontsize',
+//         action: 'fontSize',
+//         aria: 'increase/decrease font size',
+//         contentDefault: 'Size', // ±
+//         contentFA: '<i class="fa fa-text-height"></i>',
 
-        // Called when the button the toolbar is clicked
-        // Overrides ButtonExtension.handleClick
-        handleClick: function (event) {
-            event.preventDefault();
-            event.stopPropagation();
+//         init: function () {
+//             MediumEditor.extensions.form.prototype.init.apply(this, arguments);
+//         },
 
-            if (!this.isDisplayed()) {
-                // Get fontsize of current selection (convert to string since IE returns this as number)
-                var fontSize = this.document.queryCommandValue('fontSize') + '';
-                this.showForm(fontSize);
-            }
+//         // Called when the button the toolbar is clicked
+//         // Overrides ButtonExtension.handleClick
+//         handleClick: function (event) {
+//             event.preventDefault();
+//             event.stopPropagation();
 
-            return false;
-        },
+//             if (!this.isDisplayed()) {
+//                 // Get fontsize of current selection (convert to string since IE returns this as number)
+//                 var fontSize = this.document.queryCommandValue('fontSize') + '';
+//                 this.showForm(fontSize);
+//             }
 
-        // Called by medium-editor to append form to the toolbar
-        getForm: function () {
-            if (!this.form) {
-                this.form = this.createForm();
-            }
-            return this.form;
-        },
+//             return false;
+//         },
 
-        // Used by medium-editor when the default toolbar is to be displayed
-        isDisplayed: function () {
-            return this.getForm().style.display === 'block';
-        },
+//         // Called by medium-editor to append form to the toolbar
+//         getForm: function () {
+//             if (!this.form) {
+//                 this.form = this.createForm();
+//             }
+//             return this.form;
+//         },
 
-        hideForm: function () {
-            this.getForm().style.display = 'none';
-            this.getInput().value = '';
-        },
+//         // Used by medium-editor when the default toolbar is to be displayed
+//         isDisplayed: function () {
+//             return this.getForm().style.display === 'block';
+//         },
 
-        showForm: function (fontSize) {
-            var input = this.getInput();
+//         hideForm: function () {
+//             this.getForm().style.display = 'none';
+//             this.getInput().value = '';
+//         },
 
-            this.base.saveSelection();
-            this.hideToolbarDefaultActions();
-            this.getForm().style.display = 'block';
-            this.setToolbarPosition();
+//         showForm: function (fontSize) {
+//             var input = this.getInput();
 
-            input.value = fontSize || '';
-            input.focus();
-        },
+//             this.base.saveSelection();
+//             this.hideToolbarDefaultActions();
+//             this.getForm().style.display = 'block';
+//             this.setToolbarPosition();
 
-        // Called by core when tearing down medium-editor (destroy)
-        destroy: function () {
-            if (!this.form) {
-                return false;
-            }
+//             input.value = fontSize || '';
+//             input.focus();
+//         },
 
-            if (this.form.parentNode) {
-                this.form.parentNode.removeChild(this.form);
-            }
+//         // Called by core when tearing down medium-editor (destroy)
+//         destroy: function () {
+//             if (!this.form) {
+//                 return false;
+//             }
 
-            delete this.form;
-        },
+//             if (this.form.parentNode) {
+//                 this.form.parentNode.removeChild(this.form);
+//             }
 
-        // core methods
+//             delete this.form;
+//         },
 
-        doFormSave: function () {
-            this.base.restoreSelection();
-            this.base.checkSelection();
-        },
+//         // core methods
 
-        doFormCancel: function () {
-            this.base.restoreSelection();
-            this.clearFontSize();
-            this.base.checkSelection();
-        },
+//         doFormSave: function () {
+//             this.base.restoreSelection();
+//             this.base.checkSelection();
+//         },
 
-        // form creation and event handling
-        createForm: function () {
-            var doc = this.document,
-                form = doc.createElement('div'),
-                input = doc.createElement('input'),
-                close = doc.createElement('a'),
-                save = doc.createElement('a');
+//         doFormCancel: function () {
+//             this.base.restoreSelection();
+//             this.clearFontSize();
+//             this.base.checkSelection();
+//         },
 
-            // Font Size Form (div)
-            form.className = 'medium-editor-toolbar-form';
-            form.id = 'medium-editor-toolbar-form-fontsize-' + this.getEditorId();
+//         // form creation and event handling
+//         createForm: function () {
+//             var doc = this.document,
+//                 form = doc.createElement('div'),
+//                 input = doc.createElement('input'),
+//                 close = doc.createElement('a'),
+//                 save = doc.createElement('a');
 
-            // Handle clicks on the form itself
-            this.on(form, 'click', this.handleFormClick.bind(this));
+//             // Font Size Form (div)
+//             form.className = 'medium-editor-toolbar-form font-size-form';
+//             form.id = 'medium-editor-toolbar-form-fontsize-' + this.getEditorId();
 
-            // Add font size slider
-            input.setAttribute('type', 'range');
-            input.setAttribute('min', '1');
-            input.setAttribute('max', '7');
-            input.className = 'medium-editor-toolbar-input';
-            form.appendChild(input);
+//             // Handle clicks on the form itself
+//             this.on(form, 'click', this.handleFormClick.bind(this));
 
-            // Handle typing in the textbox
-            this.on(input, 'change', this.handleSliderChange.bind(this));
+//             // Add font size slider
+//             input.setAttribute('type', 'range');
+//             input.setAttribute('min', '1');
+//             input.setAttribute('max', '70');
+//             input.className = 'medium-editor-toolbar-input';
+//             form.appendChild(input);
 
-            // Add save buton
-            save.setAttribute('href', '#');
-            save.className = 'medium-editor-toobar-save';
-            save.innerHTML = this.getEditorOption('buttonLabels') === 'fontawesome' ?
-                             '<i class="fa fa-check"></i>' :
-                             '&#10003;';
-            form.appendChild(save);
+//             // Handle typing in the textbox
+//             this.on(input, 'change', this.handleSliderChange.bind(this));
+//             this.on(input, 'input', this.handleSliderInput.bind(this));
 
-            // Handle save button clicks (capture)
-            this.on(save, 'click', this.handleSaveClick.bind(this), true);
+//             // Add save buton
+//             save.setAttribute('href', '#');
+//             save.className = 'medium-editor-toobar-save';
+//             save.innerHTML = this.getEditorOption('buttonLabels') === 'fontawesome' ?
+//                              '<i class="fa fa-check"></i>' :
+//                              '&#10003;';
+//             form.appendChild(save);
 
-            // Add close button
-            close.setAttribute('href', '#');
-            close.className = 'medium-editor-toobar-close';
-            close.innerHTML = this.getEditorOption('buttonLabels') === 'fontawesome' ?
-                              '<i class="fa fa-times"></i>' :
-                              '&times;';
-            form.appendChild(close);
+//             // Handle save button clicks (capture)
+//             this.on(save, 'click', this.handleSaveClick.bind(this), true);
 
-            // Handle close button clicks
-            this.on(close, 'click', this.handleCloseClick.bind(this));
+//             // Add close button
+//             close.setAttribute('href', '#');
+//             close.className = 'medium-editor-toobar-close';
+//             close.innerHTML = this.getEditorOption('buttonLabels') === 'fontawesome' ?
+//                               '<i class="fa fa-times"></i>' :
+//                               '&times;';
+//             form.appendChild(close);
 
-            return form;
-        },
+//             // Handle close button clicks
+//             this.on(close, 'click', this.handleCloseClick.bind(this));
 
-        getInput: function () {
-            return this.getForm().querySelector('input.medium-editor-toolbar-input');
-        },
+//             return form;
+//         },
 
-        clearFontSize: function () {
-            MediumEditor.selection.getSelectedElements(this.document).forEach(function (el) {
-                if (el.nodeName.toLowerCase() === 'font' && el.hasAttribute('size')) {
-                    el.removeAttribute('size');
-                }
-            });
-        },
+//         getInput: function () {
+//             return this.getForm().querySelector('input.medium-editor-toolbar-input');
+//         },
 
-        handleSliderChange: function () {
-            var size = this.getInput().value;
-            if (size === '4') {
-                this.clearFontSize();
-            } else {
-                this.execAction('fontSize', { value: size });
-            }
-        },
+//         clearFontSize: function () {
+//             MediumEditor.selection.getSelectedElements(this.document).forEach(function (el) {
+//                 if (el.nodeName.toLowerCase() === 'font' && el.hasAttribute('size')) {
+//                     el.removeAttribute('size');
+//                 }
+//             });
+//         },
 
-        handleFormClick: function (event) {
-            // make sure not to hide form when clicking inside the form
-            event.stopPropagation();
-        },
+//         handleSliderChange: function () {
+//             // console.warn('SLIDER CHANGE',this.getInput().value);
+//             // var size = this.getInput().value;
+//             // if (size === '4') {
+//             //     this.clearFontSize();
+//             // } else {
+//             //     this.execAction('fontSize', { value: size });
+//             // }
+//         },
+//         handleSliderInput: function () {
+//             console.warn('SLIDER CHANGE',this.getInput().value);
+//             var size = this.getInput().value;
+//             var el=this.base.getFocusedElement();
+       
+//             this.base.getFocusedElement().style.fontSize = size+'px';
+            
+//             // if (size === '4') {
+//             //     this.clearFontSize();
+//             // } else {
+//             //     this.execAction('fontSize', { value: size });
+//             // }
+//         },
 
-        handleSaveClick: function (event) {
-            // Clicking Save -> create the font size
-            event.preventDefault();
-            this.doFormSave();
-        },
+//         handleFormClick: function (event) {
+//             // make sure not to hide form when clicking inside the form
+//             event.stopPropagation();
+//         },
 
-        handleCloseClick: function (event) {
-            // Click Close -> close the form
-            event.preventDefault();
-            this.doFormCancel();
-        }
-    });
+//         handleSaveClick: function (event) {
+//             // Clicking Save -> create the font size
+//             event.preventDefault();
+//             this.doFormSave();
+//         },
 
-    MediumEditor.extensions.fontSize = FontSizeForm;
-}());
+//         handleCloseClick: function (event) {
+//             // Click Close -> close the form
+//             event.preventDefault();
+//             this.doFormCancel();
+//         }
+//     });
+
+//     MediumEditor.extensions.fontSize = FontSizeForm;
+// }());
 (function () {
     'use strict';
 
@@ -5681,7 +5972,7 @@ MediumEditor.extensions = {};
         /* text: [string]
          * Text to display in the placeholder
          */
-        text: 'Type your text',
+        text: '', //dbp 
 
         /* hideOnClick: [boolean]
          * Should we hide the placeholder on click (true) or when user starts typing (false)
@@ -5890,6 +6181,19 @@ MediumEditor.extensions = {};
             } else {
                 this.relativeContainer.appendChild(this.getToolbarElement());
             }
+     
+                if(this.relativeContainer.querySelector('.font-name-form')){
+
+ 
+                var fontnameformcreation = new CustomEvent('onfontnameformcreation',{bubbles:false,detail:this.identifier});
+                document.dispatchEvent(fontnameformcreation);
+                
+                }
+                
+              
+
+
+
         },
 
         // Helper method to execute method for every extension, but ignoring the toolbar extension
@@ -5904,7 +6208,7 @@ MediumEditor.extensions = {};
 
         // Toolbar creation/deletion
 
-        createToolbar: function () {
+        createToolbar: function () { //dbp
             var toolbar = this.document.createElement('div');
 
             toolbar.id = 'medium-editor-toolbar-' + this.getEditorId();
@@ -5923,11 +6227,28 @@ MediumEditor.extensions = {};
             // Add any forms that extensions may have
             this.forEachExtension(function (extension) {
                 if (extension.hasForm) {
+                   
                     toolbar.appendChild(extension.getForm());
+
                 }
             });
 
             this.attachEventHandlers();
+
+                //dbp
+                var holder = document.getElementById('toolbar-holder');
+                if(!holder){
+                //dbp
+                var holder = document.createElement('div');
+                var med = document.getElementById('medium-editor-place');
+                holder.id = 'toolbar-holder';
+                var t = document.createTextNode("Double Click To Edit Text -- Select Text To See Editing Options");     
+                holder.appendChild(t);  
+                med.appendChild(holder);
+                                   
+
+                }
+                toolbar.classList.add('hide-me-toolbar');
 
             return toolbar;
         },
@@ -6051,9 +6372,16 @@ MediumEditor.extensions = {};
 
         handleDocumentMouseup: function (event) {
             // Do not trigger checkState when mouseup fires over the toolbar
+            console.warn('mouse up');
             if (event &&
                     event.target &&
-                    MediumEditor.util.isDescendant(this.getToolbarElement(), event.target)) {
+                    MediumEditor.util.isDescendant(this.getToolbarElement(), event.target)
+
+                    // &&
+                    // event.target.parentElement.className !== 'tzSelect' 
+
+                    ) {
+
                 return false;
             }
             this.checkState();
@@ -6072,6 +6400,7 @@ MediumEditor.extensions = {};
         },
 
         handleBlur: function () {
+          console.warn('handleBlur Fired');
             // Kill any previously delayed calls to hide the toolbar
             clearTimeout(this.hideTimeout);
 
@@ -6086,6 +6415,7 @@ MediumEditor.extensions = {};
         },
 
         handleFocus: function () {
+          console.warn('handleFocus Fired');
             this.checkState();
         },
 
@@ -6093,19 +6423,40 @@ MediumEditor.extensions = {};
 
         isDisplayed: function () {
             return this.getToolbarElement().classList.contains('medium-editor-toolbar-active');
+            
         },
 
         showToolbar: function () {
             clearTimeout(this.hideTimeout);
             if (!this.isDisplayed()) {
                 this.getToolbarElement().classList.add('medium-editor-toolbar-active');
+
+                //dbp
+                this.getToolbarElement().classList.remove('hide-me-toolbar');
+                this.getToolbarElement().classList.add('show-me-toolbar');
+                
+                var holder = document.getElementById('toolbar-holder');
+
+                holder.classList.remove('show-holder');
+                holder.classList.add('hide-holder');
+                
                 this.trigger('showToolbar', {}, this.base.getFocusedElement());
             }
         },
 
         hideToolbar: function () {
             if (this.isDisplayed()) {
+                
                 this.getToolbarElement().classList.remove('medium-editor-toolbar-active');
+                this.getToolbarElement().classList.remove('show-me-toolbar');
+                this.getToolbarElement().classList.add('hide-me-toolbar');
+
+                //dbp
+                var holder = document.getElementById('toolbar-holder');
+                holder.classList.remove('hide-holder');
+                holder.classList.add('show-holder');
+
+
                 this.trigger('hideToolbar', {}, this.base.getFocusedElement());
             }
         },
@@ -6156,6 +6507,7 @@ MediumEditor.extensions = {};
         },
 
         modifySelection: function () {
+
             var selection = this.window.getSelection(),
                 selectionRange = selection.getRangeAt(0);
 
@@ -6190,13 +6542,15 @@ MediumEditor.extensions = {};
             }
         },
 
-        checkState: function () {
+        checkState: function () { //dbp
+           
             if (this.base.preventSelectionUpdates) {
                 return;
             }
 
             // If no editable has focus OR selection is inside contenteditable = false
             // hide toolbar
+            
             if (!this.base.getFocusedElement() ||
                     MediumEditor.selection.selectionInContentEditableFalse(this.window)) {
                 return this.hideToolbar();
@@ -6209,20 +6563,22 @@ MediumEditor.extensions = {};
             if (!selectionElement ||
                     this.getEditorElements().indexOf(selectionElement) === -1 ||
                     selectionElement.getAttribute('data-disable-toolbar')) {
-                return this.hideToolbar();
+                // return this.hideToolbar();
+                return this.showToolbar();
             }
 
             // Now we know there's a focused editable with a selection
 
             // If the updateOnEmptySelection option is true, show the toolbar
             if (this.updateOnEmptySelection && this.static) {
-                return this.showAndUpdateToolbar();
+                return this.showToolbar();
             }
 
             // If we don't have a 'valid' selection -> hide toolbar
             if (!MediumEditor.selection.selectionContainsContent(this.document) ||
                 (this.allowMultiParagraphSelection === false && this.multipleBlockElementsSelected())) {
-                return this.hideToolbar();
+                // return this.hideToolbar();
+                return this.showToolbar();
             }
 
             this.showAndUpdateToolbar();
@@ -7114,13 +7470,89 @@ MediumEditor.extensions = {};
             match,
             cmdValueArgument;
         /*jslint regexp: false*/
-
+        
         // Actions starting with 'append-' should attempt to format a block of text ('formatBlock') using a specific
         // type of block element (ie append-blockquote, append-h1, append-pre, etc.)
         match = appendAction.exec(action);
         if (match) {
             return MediumEditor.util.execFormatBlock(this.options.ownerDocument, match[1]);
         }
+        
+        //dbp
+        
+        if (action === 'bold') {
+           var id = this.options.toolbar.identifier.replace('editor','text');
+
+           var e  = document.getElementById(id);
+           if(!e.style.fontWeight || e.style.fontWeight === 'normal'){
+           e.style.fontWeight = 'bold' ;
+           }
+           else{
+            e.style.fontWeight = 'normal' ;
+           }
+          var containerSizeChange = new CustomEvent('oncontainersizechange',{bubbles:true,detail:id});//dbp
+          event.target.dispatchEvent(containerSizeChange);
+           //dont forget to emmit event to make container bigger 
+                  
+        }
+        if (action === 'italic') {
+           var id = this.options.toolbar.identifier.replace('editor','text');
+
+           var e  = document.getElementById(id);
+           if(!e.style.fontStyle || e.style.fontStyle === 'normal'){
+           e.style.fontStyle = 'italic' ;
+           }
+           else{
+            e.style.fontStyle = 'normal' ;
+           }
+          var containerSizeChange = new CustomEvent('oncontainersizechange',{bubbles:true,detail:id});//dbp
+          event.target.dispatchEvent(containerSizeChange);
+           //dont forget to emmit event to make container bigger 
+                  
+        }
+        if (action === 'underline') {
+           var id = this.options.toolbar.identifier.replace('editor','text');
+
+           var e  = document.getElementById(id);
+           if(!e.style.textDecoration || e.style.textDecoration === 'none'){
+           e.style.textDecoration = 'underline' ;
+           }
+           else{
+            e.style.textDecoration = 'none' ;
+           }
+          var containerSizeChange = new CustomEvent('oncontainersizechange',{bubbles:true,detail:id});//dbp
+          event.target.dispatchEvent(containerSizeChange);
+           //dont forget to emmit event to make container bigger 
+                  
+        }
+
+        if (action === 'fontName') {
+
+            var id = this.options.toolbar.identifier.replace('editor','text');
+            var e  = document.getElementById(id);
+            // TODO: Deprecate support for opts.name in 6.0.0
+            if (opts.name) {
+                MediumEditor.util.deprecated('.name option for fontName command', '.value', '6.0.0');
+            }
+            cmdValueArgument = opts.value || opts.name;
+            // console.error('fontName action',cmdValueArgument);
+             
+            e.style.fontFamily = cmdValueArgument;
+            var containerSizeChange = new CustomEvent('oncontainersizechange',{bubbles:true,detail:id});//dbp
+            event.target.dispatchEvent(containerSizeChange);
+            
+        }
+
+        
+        if (action === 'allignText') {
+
+           d3.select(window.transformStore.image.target+"AllignAreaGroup")
+           .classed('invisible',false);
+                  
+        }
+        
+        //----------------------**************------------------------
+        
 
         if (action === 'fontSize') {
             // TODO: Deprecate support for opts.size in 6.0.0
@@ -7131,14 +7563,15 @@ MediumEditor.extensions = {};
             return this.options.ownerDocument.execCommand('fontSize', false, cmdValueArgument);
         }
 
-        if (action === 'fontName') {
-            // TODO: Deprecate support for opts.name in 6.0.0
-            if (opts.name) {
-                MediumEditor.util.deprecated('.name option for fontName command', '.value', '6.0.0');
-            }
-            cmdValueArgument = opts.value || opts.name;
-            return this.options.ownerDocument.execCommand('fontName', false, cmdValueArgument);
-        }
+        // if (action === 'fontName') {
+        //     // TODO: Deprecate support for opts.name in 6.0.0
+        //     if (opts.name) {
+        //         MediumEditor.util.deprecated('.name option for fontName command', '.value', '6.0.0');
+        //     }
+        //     cmdValueArgument = opts.value || opts.name;
+        //     console.log('fontName action',this.options.ownerDocument);
+        //     return this.options.ownerDocument.execCommand('fontName', false, cmdValueArgument);
+        // }
 
         if (action === 'createLink') {
             return this.createLink(opts);
@@ -7165,9 +7598,14 @@ MediumEditor.extensions = {};
 
             return result;
         }
-
+        
         cmdValueArgument = opts && opts.value;
-        return this.options.ownerDocument.execCommand(action, false, cmdValueArgument);
+        if(/(bold|italic|underline|fontName|)/.test(action)){
+         return true;
+        }
+        else{
+          return this.options.ownerDocument.execCommand(action, false, cmdValueArgument);
+        }
     }
 
     /* If we've just justified text within a container block
@@ -7423,10 +7861,12 @@ MediumEditor.extensions = {};
         },
 
         stopSelectionUpdates: function () {
+        
             this.preventSelectionUpdates = true;
         },
 
         startSelectionUpdates: function () {
+       
             this.preventSelectionUpdates = false;
         },
 
@@ -7466,7 +7906,7 @@ MediumEditor.extensions = {};
                 match,
                 result;
             /*jslint regexp: false*/
-
+       
             // Actions starting with 'full-' should be applied to to the entire contents of the editable element
             // (ie full-bold, full-append-pre, etc.)
             match = fullAction.exec(action);
@@ -7479,6 +7919,7 @@ MediumEditor.extensions = {};
                 // Restore the previous selection
                 this.restoreSelection();
             } else {
+
                 result = execActionInternal.call(this, action, opts);
             }
 
@@ -7523,9 +7964,11 @@ MediumEditor.extensions = {};
         getFocusedElement: function () {
             var focused;
             this.elements.some(function (element) {
+          
                 // Find the element that has focus
                 if (!focused && element.getAttribute('data-medium-focused')) {
                     focused = element;
+
                 }
 
                 // bail if we found the element that had focus
@@ -7538,6 +7981,7 @@ MediumEditor.extensions = {};
         // Export the state of the selection in respect to one of this
         // instance of MediumEditor's elements
         exportSelection: function () {
+          console.warn('export going on');
             var selectionElement = MediumEditor.selection.getSelectionElement(this.options.contentWindow),
                 editableElementIndex = this.elements.indexOf(selectionElement),
                 selectionState = null;
@@ -7554,7 +7998,10 @@ MediumEditor.extensions = {};
         },
 
         saveSelection: function () {
+               
             this.selectionState = this.exportSelection();
+
+            console.warn('save going on',this.selectionState);
         },
 
         // Restore a selection based on a selectionState returned by a call
@@ -7569,6 +8016,7 @@ MediumEditor.extensions = {};
         },
 
         restoreSelection: function () {
+       
             this.importSelection(this.selectionState);
         },
 

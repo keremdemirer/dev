@@ -1,41 +1,55 @@
+<!-- <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+ -->
 <!DOCTYPE html>
 <html>
 
 <head>
+    <script>
+        //POLYFILLS
+
+//ie custom event fix        
+(function () {
+  function CustomEvent ( event, params ) {
+    params = params || { bubbles: false, cancelable: false, detail: undefined };
+    var evt = document.createEvent( 'CustomEvent' );
+    evt.initCustomEvent( event, params.bubbles, params.cancelable, params.detail );
+    return evt;
+   }
+
+  CustomEvent.prototype = window.Event.prototype;
+
+  window.CustomEvent = CustomEvent;
+})();
+    </script>
     <meta charset="utf-8">
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
         crossorigin="anonymous"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/sylvester/0.1.3/sylvester.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sylvester/0.1.3/sylvester.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.9.1/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.0/spectrum.min.js"></script>
-<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.0/spectrum.min.css">
+    <script src="spectrum.js"></script>
+    <script src="/medium-editor-master/dist/js/medium-editor.js"></script>
 
-<!-- <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>  --> 
-<script src="/medium-editor-master/dist/js/medium-editor.min.js"></script>
-<link rel="stylesheet" href="/medium-editor-master/dist/css/medium-editor.min.css" type="text/css" media="screen" charset="utf-8">
-<link rel="stylesheet" href="/medium-editor-master/dist/css/themes/beagle.css" type="text/css" media="screen" charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    
-    <script src="/products.js"></script>
-    <script src="/productViewManager.js"></script>
+    <link rel="stylesheet" type="text/css" href="spectrum.css">
+    <link rel="stylesheet" href="/medium-editor-master/dist/css/medium-editor.min.css" type="text/css" media="screen" charset="utf-8">
+    <link rel="stylesheet" href="/medium-editor-master/dist/css/themes/flat.css" type="text/css" media="screen" charset="utf-8">
 
+    <link rel="stylesheet" href="/select/css/styles.css" type="text/css" media="screen" charset="utf-8">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Tangerine|Inconsolata|Droid+Sans">
 </head>
 
 <body>
-<!-- <div id="holder" style="height: 100%;"></div> -->
+
 <style>
 
-.container > *{
-/*     display: inline-block;
-    vertical-align: top;   */
-
-}
     html,
     body{
             height: 100%;
             margin: auto;
-/*             overflow: hidden; */
         }
         .loadedFrames > * {
             visibility: hidden;
@@ -45,65 +59,279 @@
         }
         .visible{
             visibility: visible;
+            pointer-events: auto;
         }
         .invisible{
-             width: 1px;
-             height: 1px;
+            visibility: hidden;
+            pointer-events: none;
         }
     svg {
         width: 100%;
         height: 100%;
         border: solid 1px red;
-
         }
-
     .isolate { isolation: isolate; }
-    #product-design{width:800px;height:800px; border: solid 1px black;}
+    #product-design{width:1000px;height:1000px; border: solid 1px black;}
+
+    .masked {
+      mask:url('#MaskCanvas');
+      clip-path:url('#myClip');
+    }
 
 
 
+/*     .area-style {
+    border: 1px dashed black ;
+    overflow: auto;
+    outline: none;
 
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+    width: 200px;
+    height: 100px;
+    } */
+    .text {
+    display: inline-block;
+    outline: none;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none; 
+    /* width: 200px;
+    height: 100px; */
+    width: auto;
+    height: auto;
+    /* border: 1px green solid; */
+    font-size: 24px;
+    line-height: 1.1em;
+    white-space: nowrap
+    }
+    
+/*     #ph{
+    border: 1px dashed black ;
+    width: 200px;
+    height: 100px;
 
-.rotWhlCircumference,.sclWhlCircumference {
-  fill: none;
-  stroke: rgba(0,0,0,0.4);
-  stroke-width: 5px;
+    } */
+
+    .medium-editor-placeholder{
+        /* position: absolute; */
+    }
+    #medium-editor-place{
+        max-width: 1000px;
+
+    }
+    #toolbar-holder {
+        width: 1000px;
+        height: 60px;
+        background-color: rgba(0,205,0,0.3);
+        text-align: center;
+        font-size: 18px;
+        font-family: Courier;
+        font-weight: bold;
+        display: table-cell;
+        color: rgba(0,0,0,0.8);
+        vertical-align: middle;
+    }
+    .hide-holder {
+        display: none !important;
+    }
+    .show-holder {
+        display: table-cell !important;
+    }
+    .hide-me-toolbar {
+        display: none !important;
+    }
+    .show-me-toolbar {
+        display: block !important;
+    }
+
+    .sp-container {
+    border-radius: 0;
+    background-color: rgba(87, 173, 104, 0.6);
+    border-top: 5px solid white;
+    border-bottom:none;
+    border-left: none;
+    border-right: none; 
+    padding: 20px;
+
+    }
+
+    .sp-palette-container{
+        border-right: 1px solid rgba(0,0,0,0.3) !important;
+    }
+    
+    .sp-picker-container {
+            border-left: 1px solid rgba(0,0,0,0.3) !important;
+            border-right: none !important;
+    }
+
+    .sp-color,.sp-hue,.sp-thumb-el {
+           border: none !important;
+    }
+.sp-input{
+
+}
+.sp-cancel{
+    color:rgba(0,0,0,0.3) !important;
 }
 
-.rotationWheelHandle,.scaleWheelHandle circle:hover {
+
+.medium-editor-toolbar-select {
+  /*  -webkit-appearance: none; 
+   -moz-appearance: none;
+   appearance: none; */       /* remove default arrow */
+   /* background-image: url(...);  */  /* add custom arrow */
+    outline: none;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none; 
+    
+    background-color: rgb(248, 248, 248);
+   border: none;
+    border-radius: 0;
+}
+.medium-editor-toolbar-select::-ms-expand { 
+    display: none; /* hide the default arrow in ie10 and ie11 */
+}
+
+.font-name-form {
+    border-top: solid 1px rgba(255,255,255,0.5);
+
+}
+.font-name-form > select{
+    margin-left: 20px !important;
+    margin-bottom: 10px !important;
+
+}
+
+
+
+/*BREAK AMOUNT*/
+p {
+    display: block;
+    -webkit-margin-before: 0.15em;
+    -webkit-margin-after: 0.15em;
+    -webkit-margin-start: 0px;
+    -webkit-margin-end: 0px;
+}
+
+
+.dede{pointer-events: none;}
+
+/*slider*/
+
+input[type=range] {
+  -webkit-appearance: none;
+  margin: 18px 0;
+  width: 100%;
+}
+input[type=range]:focus {
+  outline: none;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 8.4px;
+  cursor: pointer;
+  animate: 0.2s;
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  background: #3071a9;
+  border-radius: 1.3px;
+  border: 0.2px solid #010101;
+}
+input[type=range]::-webkit-slider-thumb {
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  border: 1px solid #000000;
+  height: 36px;
+  width: 16px;
+  border-radius: 3px;
+  background: #ffffff;
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -14px;
+}
+input[type=range]:focus::-webkit-slider-runnable-track {
+  background: #367ebd;
+}
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 8.4px;
+  cursor: pointer;
+  animate: 0.2s;
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  background: #3071a9;
+  border-radius: 1.3px;
+  border: 0.2px solid #010101;
+}
+input[type=range]::-moz-range-thumb {
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  border: 1px solid #000000;
+  height: 36px;
+  width: 16px;
+  border-radius: 3px;
+  background: #ffffff;
   cursor: pointer;
 }
-
-.rotationWheelHandle,.scaleWheelHandle circle {
-  fill: #25a8e0;
-/*   stroke: #4f4f4f;
-  stroke-width: 1.5px; */
+input[type=range]::-ms-track {
+  width: 100%;
+  height: 8.4px;
+  cursor: pointer;
+  animate: 0.2s;
+  background: transparent;
+  border-color: transparent;
+  border-width: 16px 0;
+  color: transparent;
+}
+input[type=range]::-ms-fill-lower {
+  background: #2a6495;
+  border: 0.2px solid #010101;
+  border-radius: 2.6px;
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+}
+input[type=range]::-ms-fill-upper {
+  background: #3071a9;
+  border: 0.2px solid #010101;
+  border-radius: 2.6px;
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+}
+input[type=range]::-ms-thumb {
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  border: 1px solid #000000;
+  height: 36px;
+  width: 16px;
+  border-radius: 3px;
+  background: #ffffff;
+  cursor: pointer;
+}
+input[type=range]:focus::-ms-fill-lower {
+  background: #3071a9;
+}
+input[type=range]:focus::-ms-fill-upper {
+  background: #367ebd;
 }
 
-.rotationWheelHandle circle.dragging,.scaleWheelHandle circle.dragging {
-  fill: #f89b11;
-/*   stroke: brown; */
+
+image {
+
+}
+
+.transformable{
+background-color: rgba(200,200,200,0.4);
+}
+.editingText{
+background-color: rgba(200,180,0,0.4);    
+}
+.stopEditingText{
+background-color: rgba(200,200,200,0.0);    
 }
 
 
-.masked {
-  mask:url('#MaskCanvas');
-  clip-path:url('#myClip');
-}
-.handleHide{
-    pointer-events: none;
-    visibility: hidden;
-}
-
-
-    
 </style>
 
-<div class="container">
 
-<div id="product-design">
+<div id="div-container">
 
-
+<div id="medium-editor-place"></div>
     
         <select id="frameColor">
         
@@ -160,77 +388,704 @@
     
         </select>
 
+<button id="addTextBox" onclick="addTextBox()" class="invisible">add text</button>
+<button onclick="editMode()">edit mode</button>
+<button onclick="previewMode()">preview mode</button>
 
-<svg id="mainSVG" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1000 1000">
 
-<g id="current" >
 
+
+
+<div id="product-design">
+
+
+
+<svg id="container" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1000 1000">
+
+<g id="current">
     <g class="masks">   
     <mask id="MaskCanvas">
-         <image id="CanvasAlpha" xlink:href="assets/canvasprint/Square/30x30-s-CanvasAlpha.png"></image>   
+         <image width="1000" height="1000" id="CanvasAlpha" xlink:href="assets/canvasprint/Square/30x30-s-CanvasAlpha.png"></image>   
     </mask>
      <mask id="MaskFrame">
-         <image id="FrameAlpha" xlink:href="assets/canvasprint/Square/30x30-s-FrameAlpha.png"></image>    
+         <image width="1000" height="1000" id="FrameAlpha" xlink:href="assets/canvasprint/Square/30x30-s-FrameAlpha.png"></image>    
     </mask>
     </g>
 
 
     <clipPath id="myClip" >
-
     </clipPath>
 
     
     <filter id="invert">
-        <feColorMatrix  in="SourceGraphic" type="matrix" values="-1 0 0 0 1 
+    <feColorMatrix  in="SourceGraphic" type="matrix" values="-1 0 0 0 1 
                                                                   0 -1 0 0 1 
                                                                   0 0 -1 0 1
-                                                                  0 0 0 1 0"/>
+                                                                  0 0 0 1 0"></feColorMatrix>
     </filter>
     
     <g class="shadows">
-    <image id="ShadowFrameAlpha" xlink:href="assets/canvasprint/Square/30x30-s-FrameShadowAlpha.png" style="filter: url('#invert');"></image>
-    <image id="ShadowCanvasAlpha" xlink:href="assets/canvasprint/Square/30x30-s-CanvasShadowAlpha.png" style="filter: url('#invert');"></image>
+    <image width="1000" height="1000" id="ShadowFrameAlpha" xlink:href="assets/canvasprint/Square/30x30-s-FrameShadowAlpha.png" style="filter: url('#invert');"></image>
+    <image width="1000" height="1000" id="ShadowCanvasAlpha" xlink:href="assets/canvasprint/Square/30x30-s-CanvasShadowAlpha.png" style="filter: url('#invert');"></image>
     </g>
     
     <g class="loadedFrames">
-        <image id="Black" xlink:href="assets/canvasprint/Square/30x30-s-Black.png"></image>
-        <image id="Oak" xlink:href="assets/canvasprint/Square/30x30-s-Oak.png"></image>
-        <image id="White" xlink:href="assets/canvasprint/Square/30x30-s-White.png"></image>
-        <image id="DarkBrown" xlink:href="assets/canvasprint/Square/30x30-s-DarkBrown.png"></image>
-        <image id="LightBrown" xlink:href="assets/canvasprint/Square/30x30-s-LightBrown.png"></image>
-        <image id="Silver" xlink:href="assets/canvasprint/Square/30x30-s-Silver.png"></image>
-        <image id="Gold" xlink:href="assets/canvasprint/Square/30x30-s-Gold.png"></image>
+        <image width="1000" height="1000" id="Black" xlink:href="assets/canvasprint/Square/30x30-s-Black.png"></image>
+        <image width="1000" height="1000" id="Oak" xlink:href="assets/canvasprint/Square/30x30-s-Oak.png"></image>
+        <image width="1000" height="1000" id="White" xlink:href="assets/canvasprint/Square/30x30-s-White.png"></image>
+        <image width="1000" height="1000" id="DarkBrown" xlink:href="assets/canvasprint/Square/30x30-s-DarkBrown.png"></image>
+        <image width="1000" height="1000" id="LightBrown" xlink:href="assets/canvasprint/Square/30x30-s-LightBrown.png"></image>
+        <image width="1000" height="1000" id="Silver" xlink:href="assets/canvasprint/Square/30x30-s-Silver.png"></image>
+        <image width="1000" height="1000" id="Gold" xlink:href="assets/canvasprint/Square/30x30-s-Gold.png"></image>
     </g>
     
     <g class="isolate" >    
     
-    <image id="DiffuseCanvas" preserveAspectRatio="xMaxYMax meet" xlink:href="assets/canvasprint/Square/30x30-s-DiffuseCanvas.png"></image>
-    <image id="IlluminationIndirect" xlink:href="assets/canvasprint/Square/30x30-s-IlluminationIndirect.png" style="mix-blend-mode:soft-light" opacity="0.5"></image>
-    <image id="SpecularShading" xlink:href="assets/canvasprint/Square/30x30-s-SpecularShading.png" style="mix-blend-mode:lighten"></image>
-<svg id="contentWrapper"  style="mix-blend-mode:multiply;" >
+    <image width="1000" height="1000" id="DiffuseCanvas" xlink:href="assets/canvasprint/Square/30x30-s-DiffuseCanvas.png"></image>
+    <image width="1000" height="1000" id="IlluminationIndirect" xlink:href="assets/canvasprint/Square/30x30-s-IlluminationIndirect.png" style="mix-blend-mode:soft-light" opacity="0.5"></image>
+    <image width="1000" height="1000" id="SpecularShading" xlink:href="assets/canvasprint/Square/30x30-s-SpecularShading.png" style="mix-blend-mode:lighten"></image>
+    <!-- Image -->
+    <svg id="contentWrapper"  style="mix-blend-mode:multiply;" >
+        <image id="content" xlink:href="assets/IMG_0128.JPG" ></image>
+    </svg>
 
-<image id="content" xlink:href="assets/aa.JPG" ></image>
+    </g>
+    <!-- Text -->
 
-<!-- <foreignObject width="200" height="200" 
-     requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility">
-   
-<textarea cols="30" rows="10" class="editable" placeholder="Hello"></textarea>
-
-</foreignObject> -->
-
-
+</g>   
 </svg>
+</div>
+</body>
 
-
-</svg>
-
-
-<script type="text/javascript" src="utils.js"></script>
-
+<script src="products.js"></script>
+<script src="productViewManager.js"></script>
+<script src="utils.js"></script>
 <script>
+
+function editMode(){
+
+$('#addTextBox').removeClass('invisible');
+
+d3.select('.text-group-wrapper')
+.attr('clip-path',null)
+.attr('mask',null)
+;
+d3.select('#contentWrapper')
+.attr('clip-path',null)
+.attr('mask',null)
+;
+$('.text').addClass('transformable');
+
+$('.handleGroup').removeClass('invisible');
+$('.handleLine').removeClass('invisible');
+$('.text').addClass('transformable');
+
+}
+function previewMode(){
+$('#addTextBox').addClass('invisible');
+d3.select('#contentWrapper')
+.attr('clip-path','url(#myClip)')
+.attr('mask','url(#MaskCanvas)')
+;
+
+d3.selectAll('.text-group-wrapper')
+.attr('clip-path','url(#myClip)')
+.attr('mask','url(#MaskCanvas)')
+;
+
+$('.handleGroup').addClass('invisible');
+$('.handleLine').addClass('invisible');
+$('.allignAreaGroup').addClass('invisible');
+
+$('.text').removeClass('transformable');
+$('.text').removeClass('editingText');
+
+}
+
+
+
+
+
+//TRANSFORM STORE DEFAULTS
+
+function addEvent(el, type, handler) {
+    if (el.attachEvent) el.attachEvent('on'+type, handler); else el.addEventListener(type, handler);
+}
+// live binding helper
+function live(selector, event, callback, context) {
+    addEvent(context || document, event, function(e) {
+        var found, el = e.target || e.srcElement;
+        while (el && el.matches && el !== context && !(found = el.matches(selector))) el = el.parentElement;
+        if (found) callback.call(el, e);
+    });
+}
+
+
+
+
+
+var currentTextSelection;
+function getSelectionTextAndContainerElement() {
+    var text = "", containerElement = null;
+    if (typeof window.getSelection != "undefined") {
+        var sel = window.getSelection();
+        if (sel.rangeCount) {
+            var node = sel.getRangeAt(0).commonAncestorContainer;
+            containerElement = node.nodeType == 1 ? node : node.parentNode;
+            text = sel.toString();
+        }
+    } else if (typeof document.selection != "undefined" &&
+               document.selection.type != "Control") {
+        var textRange = document.selection.createRange();
+        containerElement = textRange.parentElement();
+        text = textRange.text;
+    }
+    return {
+        text: text,
+        containerElement: containerElement
+    };
+}
+
+window.transformStore = {
+    text:{
+    textBoxIds :[],
+    lastActivePftTextObject:null
+    }
+
+ 
+};
+window.meStore = {}
+
+window.onload = function(){
+
+window.transformStore.image = pft('#container','#content',{
+  handles:{
+    r:10,
+    stroke:'blue',
+    strokeWidth:1,
+    fill:'cyan',
+    tcOffset:-30
+  },
+  allignArea:{
+    r:40,
+    stroke:'rgba(0,0,0,0)',
+    strokeWidth:0,
+    fill:'rgba(112,123,12,0.5)',
+    generalAllignAreaOffset:70
+  },
+  snap:{
+    rotation:{
+       snapStep:45, //in degrees 
+       snapSensivity:7 //less numbers for more precise snap   
+
+    },
+    scale:{
+       snapSensivity:0.025
+    },
+    translation:{
+       snapSensivity:25 //less numbers for more precise snap   
+    }
+  }
+});
+};
+
+
+
+function guidGenerator() {
+    var S4 = function() {
+       return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    };
+    return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+}
+function addTextBox() {
+    
+    var id = guidGenerator();
+    d3.select('.isolate')
+    .append('svg')
+    .attr('id',`text-group-wrapper${id}`)
+    .classed('text-group-wrapper',true)
+    // .style('mix-blend-mode','multiply')
+    .append('g')
+
+    .attr('id',`text-group${id}`)
+    .classed('text-group',true)
+    
+    .append('foreignObject')
+    .attr('id',`foreignObject${id}`)
+    
+    // .style('background-color','rgba(0,255,0,0.1)')
+    
+    .attr('xmlns', 'http://www.w3.org/1999/xhtml')
+    .attr('requiredFeatures',"http://www.w3.org/TR/SVG11/feature#Extensibility")
+    .append('xhtml:div')
+    // .attr('xmlns', 'http://www.w3.org/1999/xhtml')
+    .attr('id', `text${id}`)
+    .classed('editable text transformable',true)
+    .text('buraya yaz');
+    
+    var divWidth = $(`#text${id}`).width(); 
+    var divHeight = $(`#text${id}`).height(); 
+    d3.select(`#text-group${id} > foreignObject`)
+    .attr('width',divWidth)
+    .attr('height',divHeight)
+    .attr('x',window.transformStore.image.stateStore.aa.c.x - divWidth/2)
+    .attr('y',window.transformStore.image.stateStore.aa.c.y - divHeight/2);
+    window.transformStore.text[`text${id}`] = pft('#container',`#text-group${id}`,{
+      handles:{
+        r:6,
+        stroke:'green',
+        strokeWidth:3,
+        fill:'cyan',
+        tcOffset:-20
+      },
+      lines:{
+        stroke:'cyan',
+        strokeWidth:2,
+        strokeDashArray:'4',
+
+      },
+      text:true
+    });
+
+    window.transformStore.text.lastActivePftTextObject = window.transformStore.text[`text${id}`];
+    
+    window.transformStore.text[`text${id}`].canEditText = false;
+
+    
+    $(`#text-group${id}`).click(function(e){
+      
+      for (var key in window.meStore){
+ 
+        if(window.meStore[key].selected && window.meStore[key].origElements !== `#text${id}`){
+              // debugger;
+              
+              //HERE DESELECT ALL THE SELECTED ME ELEMENTS
+
+              // var elId = window.meStore[key].origElements.replace('#','');
+              // var el  =document.getElementById(elId);
+              // el.blur();
+              // el.removeAttribute('data-medium-focused');
+
+              // var toolbar = window.meStore[key].getExtensionByName('toolbar');
+              
+              // if (toolbar) {
+              //   toolbar.hideToolbar();
+              // }
+
+           
+              // if(base.getFocusedElement()){
+              // base.getFocusedElement().blur();
+              // base.getFocusedElement().removeAttribute('data-medium-focused')
+       
+              // base.selected=false;
+              // // var stopEditingText = new CustomEvent('onstopeditingtext',{bubbles:true,detail:event.target.id});
+              // // event.target.dispatchEvent(stopEditingText);
+              // // console.log('stopFired')
+              // }
+
+        // console.log(window.meStore[key].selected,window.meStore[key].origElements,`#text${id}`)
+    
+    //         txtId = window.meStore[key].origElements.replace('#','') ;
+    //            // console.error(key)
+    //         document.getElementById(txtId).blur();
+    //         document.getElementById(txtId).removeAttribute('data-medium-focused')
+       
+    //        window.transformStore.text[txtId].canEditText = false;
+    //        window.transformStore.text[txtId].editingText = false;
+    //        window.transformStore.text[txtId].addEvent('drag','default');
+           
+    //        var hId = '#' + txtId.replace('text','') + 'handleGroup';
+    //        $(hId).addClass('invisible');
+    //     // $('.handleLine').addClass('invisible');
+
+    //           window.meStore[key].selected = false;
+              
+
+
+
+        }
+      }
+          // if any rotation applied!!! FIND THE HYPOTENUS LENGTH
+
+      window.meStore[key].selected=true;
+      
+
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      $(`#text-group${id}HandleGroup`).removeClass('invisible');
+      $(`.text-group${id}HandleLine`).removeClass('invisible');
+
+      window.transformStore.text.lastActivePftTextObject = window.transformStore.text[`text${id}`];
+
+    });
+
+
+
+
+/**
+* Gets the color of the current text selection
+*/
+function getCurrentTextColor(editor){
+    return $(editor.getSelectedParentElement()).css('color');
+}
+function getCurrentShadowColor(editor){
+    return $(editor.getSelectedParentElement()).css('text-shadow');
+}
+
+
+/**
+ * Custom `color picker` extension
+ */
+var ColorPickerExtension = MediumEditor.extensions.button.extend({
+    name: "colorPicker",
+    action: "applyForeColor",
+    aria: "color picker",
+    contentDefault: "<span class='editor-color-picker'>Text Color<span>",
+
+    init: function() {
+        this.button = this.document.createElement('button');
+        this.button.classList.add('medium-editor-action');
+        this.button.innerHTML = '<b>Color</b>';
+        
+        //init spectrum color picker for this button
+        initPicker(this.button);
+        
+        //use our own handleClick instead of the default one
+        this.on(this.button, 'click', this.handleClick.bind(this));
+    },
+     handleClick: function (event) {
+         //keeping record of the current text selection
+         currentTextSelection = this.base.exportSelection();
+         
+         //sets the color of the current selection on the color picker
+         $(this.button).spectrum("set", getCurrentTextColor(this.base));
+
+         //from here on, it was taken form the default handleClick
+         event.preventDefault();
+         event.stopPropagation();
+
+         var action = this.getAction();
+
+         if (action) {
+             this.execAction(action);
+         }
+     }
+});
+
+var pickerExtension = new ColorPickerExtension();
+
+function setColor(color) {
+    var finalColor = color ? color.toRgbString() : 'rgba(0,0,0,0)';
+    
+    var id = pickerExtension.base.options.toolbar.identifier.replace('editor','text');
+    var e  = document.getElementById(id);
+    e.style.color = finalColor;
+
+    // pickerExtension.base.importSelection(currentTextSelection);
+    // pickerExtension.document.execCommand("styleWithCSS", false, true);
+    // pickerExtension.document.execCommand("foreColor", false, finalColor);
+}
+
+function initPicker(element) {
+    $(element).spectrum({
+        allowEmpty: true,
+        color: "#f00",
+        showInput: true,
+        showAlpha: true,
+        showPalette: true,
+        showInitial: true,
+        hideAfterPaletteSelect: false,
+        preferredFormat: "hex3",
+        change: function(color) {
+            setColor(color);
+        },
+        hide: function(color) {
+            setColor(color);
+        },
+        palette: [
+            ["#000", "#444", "#666", "#999", "#ccc", "#eee", "#f3f3f3", "#fff"],
+            ["#f00", "#f90", "#ff0", "#0f0", "#0ff", "#00f", "#90f", "#f0f"],
+            ["#f4cccc", "#fce5cd", "#fff2cc", "#d9ead3", "#d0e0e3", "#cfe2f3", "#d9d2e9", "#ead1dc"],
+            ["#ea9999", "#f9cb9c", "#ffe599", "#b6d7a8", "#a2c4c9", "#9fc5e8", "#b4a7d6", "#d5a6bd"],
+            ["#e06666", "#f6b26b", "#ffd966", "#93c47d", "#76a5af", "#6fa8dc", "#8e7cc3", "#c27ba0"],
+            ["#c00", "#e69138", "#f1c232", "#6aa84f", "#45818e", "#3d85c6", "#674ea7", "#a64d79"],
+            ["#900", "#b45f06", "#bf9000", "#38761d", "#134f5c", "#0b5394", "#351c75", "#741b47"],
+            ["#600", "#783f04", "#7f6000", "#274e13", "#0c343d", "#073763", "#20124d", "#4c1130"]
+        ]
+    });
+
+}
+
+/**
+ * Custom `shadow picker` extension
+ */
+var ShadowPickerExtension = MediumEditor.extensions.button.extend({
+    name: "shadowPicker",
+    action: "applyTextShadow",
+    aria: "shadow picker",
+    contentDefault: "<span class='editor-color-picker'>Text Shadow<span>",
+
+    init: function() {
+        this.button = this.document.createElement('button');
+        this.button.classList.add('medium-editor-action');
+        this.button.innerHTML = '<b>Text Shadow</b>';
+        
+        //init spectrum color picker for this button
+        initShadowPicker(this.button);
+        
+        //use our own handleClick instead of the default one
+        this.on(this.button, 'click', this.handleClick.bind(this));
+    },
+     handleClick: function (event) {
+         //keeping record of the current text selection
+         currentTextSelection = this.base.exportSelection();
+         
+         //sets the color of the current selection on the color picker
+         $(this.button).spectrum("set",getCurrentShadowColor(this.base));
+
+         //from here on, it was taken form the default handleClick
+         event.preventDefault();
+         event.stopPropagation();
+
+         var action = this.getAction();
+
+         if (action) {
+             this.execAction(action);
+         }
+     }
+});
+
+var shadowExtension = new ShadowPickerExtension();
+
+    function setShadowColor(color) {
+        var finalColor = color ? color.toRgbString() : 'rgba(0,0,0,0)';
+        
+
+            
+    var id = shadowExtension.base.options.toolbar.identifier.replace('editor','text');
+    var e  = document.getElementById(id);
+
+    e.style.textShadow = '4px 4px 2px ' + finalColor;
+
+
+
+        // shadowExtension.base.importSelection(currentTextSelection);
+        // shadowExtension.document.execCommand("styleWithCSS", false, true);
+        // // shadowExtension.document.execCommand("foreColor", false, finalColor);
+        // console.log(shadowExtension.base.exportSelection());
+        //             console.log(shadowExtension.base.getSelectedParentElement());
+
+        //  if(shadowExtension.base.getSelectedParentElement().tagName !== 'DIV'){
+        //     shadowExtension.base.getSelectedParentElement().style.textShadow = '4px 4px 2px ' + finalColor;
+        //  }
+        //  else{
+        //     var p = document.getSelection().focusNode.previousElementSibling;
+        //     while( p !== null){
+        //         if(p.tagName === 'SPAN'){
+        //         p.style.textShadow = '4px 4px 2px ' + finalColor;
+        //         }
+        //         p=p.previousElementSibling;
+        //     } 
+          
+        //   // selection based devam ediyorsak shadow degistirirken spanleri detect edip birbirini ezmeden degistirmeliyiz. 
+
+        //     shadowExtension.document.execCommand("insertHTML", true, "<span style='\
+        //     text-shadow: 4px 4px 2px " + finalColor + ";'>"+ document.getSelection() +"</span>");
+
+        //  }
+        // if(!isChildrenSpanExists){
+        
+        // var o = getSelectionTextAndContainerElement();
+        
+        // shadowExtension.document.execCommand("insertHTML", true, "<span style='\
+        // text-shadow: 4px 4px 2px " + finalColor + ";'>"+ document.getSelection()+"</span>");
+
+        // }
+        // else{
+        
+        // var o = getSelectionTextAndContainerElement();
+        
+        // if(o.containerElement.nodeName === 'DIV' ){
+        
+        // // shadowExtension.document.execCommand("insertHTML", true, "<span style='\
+        // // text-shadow: 4px 4px 2px " + finalColor + ";'>"+ document.getSelection()+"</span>");
+        
+        // }
+        
+
+        // o.containerElement.style.textShadow = '4px 4px 2px ' + finalColor;
+        // // o.containerElement.style.width = '1000px';
+        //    console.log(o.containerElement.style)
+        // }
+
+
+
+        // if(cb){
+        // cb(shadowExtension);
+        // }
+    }
+
+function initShadowPicker(element) {
+    $(element).spectrum({
+        allowEmpty: true,
+        color: "#f00",
+        showInput: true,
+        showAlpha: true,
+        showPalette: true,
+        showInitial: true,
+        hideAfterPaletteSelect: false,
+        preferredFormat: "hex3",
+        change: function(color) {
+
+
+
+            setShadowColor(color);
+        },
+        hide: function(color) {
+              
+
+setShadowColor(color);
+       
+        },
+        palette: [
+            ["#000", "#444", "#666", "#999", "#ccc", "#eee", "#f3f3f3", "#fff"],
+            ["#f00", "#f90", "#ff0", "#0f0", "#0ff", "#00f", "#90f", "#f0f"],
+            ["#f4cccc", "#fce5cd", "#fff2cc", "#d9ead3", "#d0e0e3", "#cfe2f3", "#d9d2e9", "#ead1dc"],
+            ["#ea9999", "#f9cb9c", "#ffe599", "#b6d7a8", "#a2c4c9", "#9fc5e8", "#b4a7d6", "#d5a6bd"],
+            ["#e06666", "#f6b26b", "#ffd966", "#93c47d", "#76a5af", "#6fa8dc", "#8e7cc3", "#c27ba0"],
+            ["#c00", "#e69138", "#f1c232", "#6aa84f", "#45818e", "#3d85c6", "#674ea7", "#a64d79"],
+            ["#900", "#b45f06", "#bf9000", "#38761d", "#134f5c", "#0b5394", "#351c75", "#741b47"],
+            ["#600", "#783f04", "#7f6000", "#274e13", "#0c343d", "#073763", "#20124d", "#4c1130"]
+        ]
+    });
+
+}
+
+
+
+
+
+
+window.meStore[`editor${id}`] = new MediumEditor(`#text${id}`, {
+  
+
+  buttonLabels: false,
+  imageDragging: false,
+   
+  toolbar: {
+    buttons: ['fontname','colorPicker','shadowPicker','bold', 'italic', 'underline','allignText'],
+    relativeContainer:document.getElementById('medium-editor-place'),
+    identifier:`editor${id}`,
+
+
+  },    
+  extensions: {
+        'colorPicker': pickerExtension,
+        'shadowPicker': shadowExtension
+
+  },
+  extraScope:{
+      allignSurface:window.transformStore.image
+  }
+});
+
+
+
+window.meStore[`editor${id}`].getRawIdString = function(){
+    return  this.options.toolbar.identifier.replace('editor','');
+
+}
+transformStore.text.textBoxIds.push(`text${id}`);
+
+window.meStore[`editor${id}`].handleInputCounter = 0;
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+document.addEventListener('oneditingtext', function (e) { 
+
+
+
+var id = e.detail;
+
+window.transformStore.text[id].removeEvent('drag');
+
+window.transformStore.text[id].canEditText = true;
+window.transformStore.text[id].editingText = true;
+
+
+$('.text').addClass('editingText');
+
+}, false);
+
+document.addEventListener('onstopeditingtext', function (e) { 
+console.log('stopCaught')
+
+for(var i = 0; i < transformStore.text.textBoxIds.length; i++){
+var id = transformStore.text.textBoxIds[i];
+window.transformStore.text[id].canEditText = false;
+window.transformStore.text[id].editingText = false;
+window.transformStore.text[id].addEvent('drag','default');
+
+$('.text').removeClass('editingText');
+} 
+
+}, false);
+
+document.addEventListener('oncontainersizechange', function (e) { 
+var id = e.detail;
+console.error(id);
+var targetWidth = $(`#${id}`).width(); 
+var targetHeight = $(`#${id}`).height(); 
+var parentId= `#${id.replace('text','foreignObject')}`;
+
+var svgContainerToDivContainerRatio = 
+parseFloat(d3.select('#container').attr('viewBox').split(' ')[2])/$('#product-design').width();
+console.log(svgContainerToDivContainerRatio);
+
+var scale = window.transformStore.text[id].stateStore.s;
+console.log(targetWidth,targetHeight)
+console.log(targetWidth*scale,targetHeight*scale)
+
+window.transformStore.text[id].updateHandlesExternally(targetWidth,targetHeight,parentId);
+//Grow the BB not breaking the system permanently!
+
+
+}, false);
+
+
+//rotation snap events
+document.addEventListener('onrotationsnapped', function (e) { 
+var id = e.detail + 'HandleGroup';
+d3.select(id).selectAll('circle').attr('fill','red');
+}, false);
+document.addEventListener('onrotationunsnapped', function (e) { 
+var id = e.detail + 'HandleGroup';
+d3.select(id).selectAll('circle').attr('fill','cyan');
+}, false);
+
+
+
+
 
 
 function initScene(){
+
+d3.select('#contentWrapper')
+.attr('clip-path','url(#myClip)')
+.attr('mask','url(#MaskCanvas)')
+;
 
 var productViewManager = new ProductViewManager(products,"assets/canvasprint/");
 
@@ -285,63 +1140,220 @@ $('#size').bind('change', function (e) {
 
 $('#content').click(function(e){
 
-
-    e.stopPropagation();
+e.stopPropagation();
 
 d3.select('#contentWrapper')
 .attr('clip-path',null)
 .attr('mask',null)
 ;
 
+// d3.select('.text-group')
+// .attr('clip-path',null)
+// .attr('mask',null)
+// ;
 
-
-
-
-    if(able){
-
-    pft('#mainSVG','#content',{
-  handles:{
-    r:10,
-    stroke:'blue',
-    strokeWidth:1,
-    fill:'cyan',
-    tcOffset:-30
-  }
+$('#contentHandleGroup').removeClass('invisible');
+ 
 });
 
 
-    }
-    else{
-        $('#handleGroup').removeClass('handleHide');
-    }
-    able=false;
+// document.addEventListener('ontextboxclicked', function (e) { 
 
+// console.log(e.target,e)
+
+// // e.stopPropagation();
+
+// // d3.select('#contentWrapper')
+// // .attr('clip-path',null)
+// // .attr('mask',null)
+// // ;
+
+// d3.select(`#text-group-wrapper${e.detail}`)
+// .attr('clip-path',null)
+// .attr('mask',null)
+// ;
+// $('.text').addClass('transformable');
+// // $('#contentHandleGroup').removeClass('invisible');
+ 
+// });
+
+// $('#container').click(function(e){
+// });
+
+
+
+
+//select renew!
+
+document.addEventListener('onfontnameformcreation', function (e) { 
+
+//Prevent Multiple Creations DONT FORGET!
+// looks like pretty much done with selecting with select box id
+
+    var editorID = e.detail;
+
+    // The select element to be replaced:
+    var select = $(`#${editorID}-toolbar-select`);
+console.log(select)
+    var selectBoxContainer = $('<div>',{
+        width       : '0px',
+        class       : 'tzSelect',
+        html        : '<div class="selectBox"></div>'
+    });
+
+    var dropDown = $('<ul>',{class:'dropDown'});
+    var selectBox = selectBoxContainer.find('.selectBox');
+
+    // Looping though the options of the original select element
+
+    select.find('option').each(function(i){
+        var option = $(this);
+
+        if(i==select.attr('selectedIndex')){
+            selectBox.html(option.text());
+        }
+
+        // As of jQuery 1.4.3 we can access HTML5
+        // data attributes with the data() method.
+
+        if(option.data('skip')){
+            return true;
+        }
+
+        // Creating a dropdown item according to the
+        // data-icon and data-html-text HTML5 attributes:
+
+        var li = $('<li>',{
+            html:   `<span class='dropdown-citizen' style="font-family:${option.data('html-text')};">
+                    ${option.data('html-text')}</span>`
+        });
+        li.addClass('dropdown-citizen');
+
+        li.click(function(e){
+           
+
+            event.stopPropagation();
+
+            selectBox.html(option.text());
+            dropDown.trigger('hide');
+
+            // When a click occurs, we are also reflecting
+            // the change on the original select element:
+            select.val(option.val());
+            
+            var t = window.meStore[editorID].events.events;
+      
+        
+            for(var i = 0; i < t.length;i++){
+                // console.log(t[i]);
+                if(t[i][0].localName === 'select'){
+                    console.log('found select in index' +i);
+                    console.log(t[i]);
+                    t[i][2].call();
+                }
+                // for(var k = 0; k < t[i].length; k++){
+
+                //     t[i][k]
+                // }
+
+            }
+            
+            return false;
+        });
+
+        dropDown.append(li);
+    });
+
+    selectBoxContainer.append(dropDown.hide());
+    select.hide().after(selectBoxContainer);
+
+    // Binding custom show and hide events on the dropDown:
+
+    dropDown.bind('show',function(){
+event.stopPropagation();
+        if(dropDown.is(':animated')){
+            return false;
+        }
+
+        selectBox.addClass('expanded');
+        dropDown.slideDown();
+
+    }).bind('hide',function(){
+event.stopPropagation();
+        if(dropDown.is(':animated')){
+            return false;
+        }
+      
+        selectBox.removeClass('expanded');
+        dropDown.slideUp();
+
+    }).bind('toggle',function(){
+        
+event.stopPropagation();
+        if(selectBox.hasClass('expanded')){
+            dropDown.trigger('hide');
+        }
+        else dropDown.trigger('show');
+    });
+
+    // selectBox.click(function(e){
+         
+    //     event.stopPropagation();
+
+    //     dropDown.trigger('toggle');
+    //     return false;
+    // });
+$('.medium-editor-action-fontname').click(function(e){
+
+var mt =$(this).offset().top + parseFloat($(this).height() );
+var ml = $(this).offset().left;
+console.log(mt,ml);
+$('.dropDown').css('left',0+'px')
+.css('top',0+'px')
+
+//for userAgent how to disable
+.css('margin',0)
+.css('padding',0)
+
+
+
+
+        event.stopPropagation();
+
+        dropDown.trigger('toggle');
+        return false;
 });
-$('#mainSVG').click(function(e){
+    // If we click anywhere on the page, while the
+    // dropdown is shown, it is going to be hidden:
 
-e.stopPropagation();
-
-d3.select('#contentWrapper')
-.attr('clip-path','url(#myClip)')
-.attr('mask','url(#MaskCanvas)')
-;
+    $(document).click(function(){
+        event.stopPropagation();
+        dropDown.trigger('hide');
+    });
 
 
-    $('#handleGroup').addClass('handleHide');
 
-});
+
+}, false);
 
 
 
 
 
 }
+
 initScene();
 var able = true;
+
+
+
+setTimeout(function(){
+console.log(window.transformStore)
+},3000);
 </script>    
 
 <script type="text/javascript" src="pft.js"></script>
-
+<script type="text/javascript" src="txt.js"></script>
 
 </html>
 
