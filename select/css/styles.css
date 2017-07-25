@@ -1,0 +1,94 @@
+
+.tzSelect{
+	
+	/* This is the container of the new select element */
+	
+	height:0px;
+	display:inline-block;
+	min-width:200px;
+	position:relative;
+	margin-left: 10px;
+	
+	/* Preloading the background image for the dropdown */
+	background:rgba(255,255,255,0);
+}
+
+.tzSelect .selectBox{
+	position:absolute;
+	
+	height:100%;
+	width:100%;
+	
+	/* Using CSS3 multiple backgrounds and a fallback */
+	
+     background:rgba(255,255,255,0);
+	
+	cursor:pointer;
+	
+	-moz-border-radius:0px;
+	-webkit-border-radius:0px;
+	border-radius:0px;
+}
+
+.tzSelect .selectBox:hover,
+.tzSelect .selectBox.expanded{
+
+	color:#2c5667;
+
+}
+
+.tzSelect .dropDown{
+	border: solid 1px rgba(87, 173, 104, 0.6);
+	position:absolute;
+
+	width:100%;
+
+    z-index: 99;
+
+
+	background:rgba(255,255,255,1);
+	
+	-moz-box-sizing:border-box;
+	-webkit-box-sizing:border-box;
+	box-sizing:border-box;
+
+	list-style: none !important;
+    display: block;
+	
+
+}
+
+
+
+
+.tzSelect li{
+    float: none !important;
+	height:auto;
+	cursor:pointer;
+	padding-left:8px;
+    padding-top: 10px;
+
+
+	
+	/* Again, using CSS3 multiple backgrounds with a fallback */
+	
+     background:rgba(255,255,255,1);
+}
+.tzSelect li:last-child{
+	padding-bottom: 10px;
+}
+
+.tzSelect li:hover{
+
+}
+
+.tzSelect li span{
+
+}
+
+.tzSelect li i{
+	color:#999999;
+	display:block;
+	font-size:12px;
+}
+

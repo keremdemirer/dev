@@ -104,6 +104,8 @@ var rectangle = d3.select("#myClip")
 .attr("height", thisProduct.designHeight)
 // .attr("style", "mix-blend-mode:multiply;")
 ;
-
+d3.select('#content')
+.attr("width", thisProduct.designWidth)
+.attr("height", thisProduct.designHeight);
 return thisProduct;
 }

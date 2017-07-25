@@ -47,6 +47,10 @@
     height: 40px;
     padding-left: 16px;
     width: 220px; }
+
+
+
+
     .medium-editor-toolbar-form .medium-editor-toolbar-input::-webkit-input-placeholder {
       color: #f8f5f3;
       color: rgba(248, 245, 243, 0.8); }
